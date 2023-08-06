@@ -17,22 +17,34 @@ app.get('/data', (req, res) => {
     const username = req.query.username;
 
     if (!username) {
-        return res.status(400).json({ error: 'กรุณาระบุค่า username ใน query parameter' });
+        db.ref('users').once('value')
+            .then(snapshot => {
+                const data = snapshot.val();
+
+                if (!data) {
+                    return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้' });
+                }
+
+                res.status(200).json(data);
+            })
+            .catch(error => {
+                res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอ่านข้อมูล' });
+            });
+    } else {
+        db.ref('users/' + username).once('value')
+            .then(snapshot => {
+                const data = snapshot.val();
+
+                if (!data) {
+                    return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้' });
+                }
+
+                res.status(200).json(data);
+            })
+            .catch(error => {
+                res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอ่านข้อมูล' });
+            });
     }
-
-    db.ref('users/' + username).once('value')
-        .then(snapshot => {
-            const data = snapshot.val();
-
-            if (!data) {
-                return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้' });
-            }
-
-            res.status(200).json(data);
-        })
-        .catch(error => {
-            res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอ่านข้อมูล' });
-        });
 });
 
 app.post('/data', (req, res) => {
